@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>College Attendance Record</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #222;
+      padding: 30px 15px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      border-radius: 18px;
+      padding: 30px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      color: #4b3f9e;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      color: #666;
+    }
+
+    .form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    input,
+    select {
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #667eea;
+    }
+
+    button {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      cursor: pointer;
+      background: #667eea;
+      color: #fff;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #5a6fd8;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: #f4f6ff;
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 26px;
+      color: #4b3f9e;
+    }
+
+    .card p {
+      margin: 5px 0 0;
+      color: #666;
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background: #f4f6ff;
+      color: #4b3f9e;
+    }
+
+    tr:hover {
+      background: #fafbff;
+    }
+
+    .present {
+      color: #16a34a;
+      font-weight: 600;
+    }
+
+    .absent {
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+    .actions button {
+      padding: 7px 10px;
+      font-size: 13px;
+      margin-right: 5px;
+    }
+
+    .mark-present {
+      background: #16a34a;
+    }
+
+    .mark-absent {
+      background: #dc2626;
+    }
+
+    .delete {
+      background: #6b7280;
+    }
+
+    .empty {
+      text-align: center;
+      color: #777;
+      padding: 25px;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>College Attendance Record</h1>
+      <p>Add students and mark their daily attendance</p>
+    </header>
+
+    <div class="form">
+      <input type="text" id="studentName" placeholder="Student name" />
+      <input type="text" id="rollNumber" placeholder="Roll number" />
+      <input type="text" id="department" placeholder="Department" />
+      <button onclick="addStudent()">Add Student</button>
+    </div>
+
+    <div class="stats">
+      <div class="card">
+        <h3 id="totalStudents">0</h3>
+        <p>Total Students</p>
+      </div>
+      <div class="card">
+        <h3 id="presentToday">0</h3>
+        <p>Present Today</p>
+      </div>
+      <div class="card">
+        <h3 id="absentToday">0</h3>
+        <p>Absent Today</p>
+      </div>
+      <div class="card">
+        <h3 id="attendancePercent">0%</h3>
+        <p>Attendance</p>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Roll No.</th>
+          <th>Name</th>
+          <th>Department</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="attendanceTable"></tbody>
+    </table>
+
+    <div id="emptyMessage" class="empty">
+      No students added yet.
+    </div>
+  </div>
+
+  <script>
+    let students = JSON.parse(localStorage.getItem("students")) || [];
+
+    function saveData() {
+      localStorage.setItem("students", JSON.stringify(students));
+    }
+
+    function addStudent() {
+      const name = document.getElementById("studentName").value.trim();
+      const roll = document.getElementById("rollNumber").value.trim();
+      const dept = document.getElementById("department").value.trim();
+
+      if (!name || !roll || !dept) {
+        alert("Please fill all fields.");
+        return;
+      }
+
+      students.push({
+        name,
+        roll,
+        dept,
+        status: "Not Marked"
+      });
+
+      saveData();
+      renderStudents();
+
+      document.getElementById("studentName").value = "";
+      document.getElementById("rollNumber").value = "";
+      document.getElementById("department").value = "";
+    }
+
+    function markAttendance(index, status) {
+      students[index].status = status;
+      saveData();
+      renderStudents();
+    }
+
+    function deleteStudent(index) {
+      if (confirm("Delete this student?")) {
+        students.splice(index, 1);
+        saveData();
+        renderStudents();
+      }
+    }
+
+    function renderStudents() {
+      const table = document.getElementById("attendanceTable");
+      const emptyMessage = document.getElementById("emptyMessage");
+
+      table.innerHTML = "";
+
+      if (students.length === 0) {
+        emptyMessage.style.display = "block";
+      } else {
+        emptyMessage.style.display = "none";
+      }
+
+      students.forEach((student, index) => {
+        const row = document.createElement("tr");
+
+        const statusClass =
+          student.status === "Present"
+            ? "present"
+            : student.status === "Absent"
+            ? "absent"
+            : "";
+
+        row.innerHTML = `
+          <td>${student.roll}</td>
+          <td>${student.name}</td>
+          <td>${student.dept}</td>
+          <td class="${statusClass}">${student.status}</td>
+          <td class="actions">
+            <button class="mark-present" onclick="markAttendance(${index}, 'Present')">Present</button>
+            <button class="mark-absent" onclick="markAttendance(${index}, 'Absent')">Absent</button>
+            <button class="delete" onclick="deleteStudent(${index})">Delete</button>
+          </td>
+        `;
+
+        table.appendChild(row);
+      });
+
+      updateStats();
+    }
+
+    function updateStats() {
+      const total = students.length;
+      const present = students.filter(s => s.status === "Present").length;
+      const absent = students.filter(s => s.status === "Absent").length;
+      const percent = total ? Math.round((present / total) * 100) : 0;
+
+      document.getElementById("totalStudents").textContent = total;
+      document.getElementById("presentToday").textContent = present;
+      document.getElementById("absentToday").textContent = absent;
+      document.getElementById("attendancePercent").textContent = percent + "%";
+    }
+
+    renderStudents();
+  </script>
+
+</body>
+</html>
